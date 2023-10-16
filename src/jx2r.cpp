@@ -1,6 +1,9 @@
 #include "mini-printer.h"
 #include <SPI.h>
 
+#define JX2R_HEAT_TIME_US 2000
+#define JX2R_COOLING_TIME_US 200
+
 static uint8_t stb_pins[6] = {
     Pin_STB1,
     Pin_STB2,
@@ -46,7 +49,7 @@ void jx2r_motor_run(uint8_t nsteps, MotorDirs dir)
         {
             digitalWrite(motor_pins[i], motor_steps[index][i]);
         }
-        delay(10);
+        delay(2);
 
         nsteps--;
         if (dir == Motor_Dir1)
@@ -93,15 +96,20 @@ void jx2r_print_one_line(uint8_t *data, uint8_t len)
     jx2r_power_on();
     jx2r_spi_send(data, len);
 
+    // Need to be on the right place first
+    jx2r_motor_run(1);
+
+    // Heat the paper
     for (int i = 0; i < 6; i++)
     {
         digitalWrite(stb_pins[i], HIGH);
-        delayMicroseconds(2000);
+        delayMicroseconds(JX2R_HEAT_TIME_US);
         digitalWrite(stb_pins[i], LOW);
-        delayMicroseconds(200);
+        delayMicroseconds(JX2R_COOLING_TIME_US);
     }
 
-    jx2r_motor_run(2);
+    // Go on for the next line, since that the motor walk four steps per line
+    jx2r_motor_run(3);
     jx2r_motor_stop();
 
     jx2r_power_off();
