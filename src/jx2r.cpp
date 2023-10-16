@@ -1,22 +1,22 @@
-#include "mini-printer.h"
 #include <SPI.h>
+#include "printer.h"
 
 #define JX2R_HEAT_TIME_US 2000
 #define JX2R_COOLING_TIME_US 200
 
 static uint8_t stb_pins[6] = {
-    Pin_STB1,
-    Pin_STB2,
-    Pin_STB3,
-    Pin_STB4,
-    Pin_STB5,
-    Pin_STB6,
+    PIN_STB1,
+    PIN_STB2,
+    PIN_STB3,
+    PIN_STB4,
+    PIN_STB5,
+    PIN_STB6,
 };
 static uint8_t motor_pins[4] = {
-    Pin_Motor_AP,
-    Pin_Motor_BP,
-    Pin_Motor_AN,
-    Pin_Motor_BN,
+    PIN_MOTOR_AP,
+    PIN_MOTOR_BP,
+    PIN_MOTOR_AN,
+    PIN_MOTOR_BN,
 };
 static uint8_t motor_steps[][4] = {
     {1, 0, 0, 1},
@@ -76,7 +76,7 @@ static SPISettings spi_settings = SPISettings(1000000, SPI_MSBFIRST, SPI_MODE0);
 
 void jx2r_spi_init(void)
 {
-    hspi.begin(Pin_SPI_SCK, -1, Pin_SPI_SDA, -1);
+    hspi.begin(PIN_SPI_SCK, -1, PIN_SPI_SDA, -1);
     hspi.setFrequency(2000000);
 }
 
@@ -86,9 +86,14 @@ void jx2r_spi_send(uint8_t *data, uint8_t len)
     hspi.transfer(data, len);
     hspi.endTransaction();
 
-    digitalWrite(Pin_LAT, LOW);
+    digitalWrite(PIN_LAT, LOW);
     delayMicroseconds(1);
-    digitalWrite(Pin_LAT, HIGH);
+    digitalWrite(PIN_LAT, HIGH);
+}
+
+bool jx2r_printer_ready(void)
+{
+    return printer_des.connected && printer_des.size > 0 && printer_des.temp < 50 && !printer_des.lackof_paper;
 }
 
 void jx2r_print_one_line(uint8_t *data, uint8_t len)
@@ -117,20 +122,20 @@ void jx2r_print_one_line(uint8_t *data, uint8_t len)
 
 void jx2r_power_on(void)
 {
-    digitalWrite(Pin_VH_EN, HIGH);
+    digitalWrite(PIN_VH_EN, HIGH);
 }
 
 void jx2r_power_off(void)
 {
-    digitalWrite(Pin_VH_EN, LOW);
+    digitalWrite(PIN_VH_EN, LOW);
 }
 
 void jx2r_init(void)
 {
     jx2r_motor_init();
 
-    pinMode(Pin_SPI_SCK, OUTPUT);
-    pinMode(Pin_SPI_SDA, OUTPUT);
+    pinMode(PIN_SPI_SCK, OUTPUT);
+    pinMode(PIN_SPI_SDA, OUTPUT);
     jx2r_spi_init();
 
     for (int i = 0; i < 6; i++)
@@ -139,9 +144,33 @@ void jx2r_init(void)
         digitalWrite(stb_pins[i], LOW);
     }
 
-    pinMode(Pin_LAT, OUTPUT);
-    digitalWrite(Pin_LAT, HIGH);
+    pinMode(PIN_LAT, OUTPUT);
+    digitalWrite(PIN_LAT, HIGH);
 
-    pinMode(Pin_VH_EN, OUTPUT);
-    digitalWrite(Pin_VH_EN, HIGH);
+    pinMode(PIN_VH_EN, OUTPUT);
+    digitalWrite(PIN_VH_EN, HIGH);
+
+    analogReadResolution(12);
+    pinMode(PIN_PHINT, INPUT);
+}
+
+float jx2r_check_temp(void)
+{
+
+    const float B = 3950;
+    const float R25 = 30;
+    const float T25 = 273.15 + 25;
+
+    float tx = 0.0;
+
+    uint32_t v = analogReadMilliVolts(PIN_THER);
+    float rx = 10.0 * v / (3300.0 - v);
+    tx = B * T25 / (T25 * log(rx / R25) + B);
+
+    return tx - 273.15;
+}
+
+bool jx2r_lackof_paper(void)
+{
+    return digitalRead(PIN_PHINT) == HIGH;
 }

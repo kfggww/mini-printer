@@ -1,4 +1,4 @@
-#include "mini-printer.h"
+#include "printer.h"
 
 void test_case1(void)
 {

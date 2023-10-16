@@ -1,20 +1,22 @@
 #include <Arduino.h>
-#include "mini-printer.h"
+#include "printer.h"
 #include "test.h"
 
 void setup()
 {
   Serial.begin(115200);
-  jx2r_init();
+  printer_init();
+
+  xTaskCreate(printting_task, "printting_task", 1024, NULL, 2, NULL);
+  xTaskCreate(check_paper_task, "check_paper_task", 1024, NULL, 1, NULL);
+  xTaskCreate(check_temp_task, "check_temp_task", 1024, NULL, 1, NULL);
+  xTaskCreate(check_battery_task, "check_battery_task", 1024, NULL, 1, NULL);
 }
 
 void loop()
 {
-  test_case1();
-  test_case2();
-
   while (1)
   {
-    delay(1000);
+    delay(5000);
   }
 }
