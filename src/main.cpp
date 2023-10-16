@@ -1,18 +1,33 @@
 #include <Arduino.h>
+#include "mini-printer.h"
 
-// put function declarations here:
-int myFunction(int, int);
+void test_printer(void)
+{
+  uint8_t buffer[48];
 
-void setup() {
-  // put your setup code here, to run once:
-  int result = myFunction(2, 3);
+  for (int i = 0; i < 48; i++)
+  {
+    buffer[i] = 0x33;
+  }
+
+  jx2r_print_one_line(buffer, 48);
 }
 
-void loop() {
-  // put your main code here, to run repeatedly:
+void setup()
+{
+  jx2r_init();
 }
 
-// put function definitions here:
-int myFunction(int x, int y) {
-  return x + y;
+void loop()
+{
+
+  // jx2r_motor_run(100);
+  for(int i = 0; i < 50; i++) {
+    test_printer();
+  }
+
+  while (1)
+  {
+    delay(1000);
+  }
 }
