@@ -4,6 +4,7 @@
 #include <Arduino.h>
 
 #define PRINTER_MAX_NLINE 50
+#define PRINTER_LINE_BYTES 48
 
 enum PinDefs
 {
@@ -64,10 +65,12 @@ bool jx2r_lackof_paper(void);
 /* Printer data */
 struct PrinterDes
 {
-    uint8_t buffer[PRINTER_MAX_NLINE][48];
+    uint8_t buffer[PRINTER_MAX_NLINE][PRINTER_LINE_BYTES];
     uint8_t read_ptr;
     uint8_t write_ptr;
     uint8_t size;
+    uint8_t free;
+    SemaphoreHandle_t buffer_mutex;
 
     float temp;
     float battery;

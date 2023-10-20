@@ -6,9 +6,11 @@ void printting_task(void *arg)
     {
         if (jx2r_printer_ready())
         {
+            xSemaphoreTake(printer_des.buffer_mutex, 0);
             jx2r_print_one_line(printer_des.buffer[printer_des.read_ptr], 48);
             printer_des.read_ptr = (printer_des.read_ptr + 1) % PRINTER_MAX_NLINE;
             printer_des.size--;
+            xSemaphoreGive(printer_des.buffer_mutex);
             Serial.println("printer task run!!!");
         }
         delay(10);
